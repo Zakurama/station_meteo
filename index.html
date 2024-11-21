@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Météorologie IOT</title>
+    <link rel="stylesheet" href="stylesheets/main.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <header>
+        <div class="menu">
+            <a href="index.html">Accueil</a>
+            <a href="historique.html">Historique</a>
+        </div>
+        <div>
+            <h1>Météorologie IOT</h1>
+        </div>
+    </header>
+    <div class="main">
+        <div class="container">
+            <div class="card" id="humidity-div">
+                <h2>Humidité</h2>
+                <p id="humidity">--</p>
+            </div>
+            <div class="card" id="temperature-div">
+                <h2>Température</h2>
+                <p id="temperature">--</p>
+            </div>
+            <div class="card" id="pressure-div">
+                <h2>Pression</h2>
+                <p id="pressure">--</p>
+            </div>
+        </div>
+    </div>
+    <script src="scripts/refresh_info.js"></script>
+</body>
+</html>

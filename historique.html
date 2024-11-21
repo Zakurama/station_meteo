@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Météorologie IOT</title>
+    <link rel="stylesheet" href="stylesheets/main.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <header>
+        <div class="menu">
+            <a href="index.html">Accueil</a>
+            <a href="historique.html">Historique</a>
+        </div>
+        <div>
+            <h1>Historique Météorologie</h1>
+        </div>
+    </header>
+    <div class="main">
+        <div style="width: clamp(350px, 50vw, 1200px);"><canvas id="humidity_chart"></canvas></div>
+        <div style="width: clamp(350px, 50vw, 1200px);"><canvas id="temperature_chart"></canvas></div>
+        <div style="width: clamp(350px, 50vw, 1200px);"><canvas id="pressure_chart"></canvas></div>
+    </div>
+    
+    <script src="scripts/metric_chart.js"></script>
+</body>
+</html>
