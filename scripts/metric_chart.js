@@ -22,8 +22,6 @@ function getMeteoData() {
         .catch(error => console.error("Erreur : ", error));
 }
 
-setInterval(getMeteoData, 10000);
-
 function createChart(data, namechart, datatype, dataname) {
     // Création du graphique avec Chart.js
     new Chart(namechart, {
