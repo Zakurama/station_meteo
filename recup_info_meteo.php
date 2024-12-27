@@ -1,5 +1,7 @@
 <?php
 
+$day_in_second = 86400;
+
 include 'private/config.php';
 
 // Set error reporting for debugging (optional for development)
@@ -17,13 +19,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Decode the JSON data into a PHP associative array
     $data = json_decode($rawData, true);
 
-    // Check if the required keys are present
-    if (isset($data['temperature'], $data['pression'], $data['humidite'], $data['password']) && $data['password'] === $password) {
-        // Extract values
-        $temperature = $data['temperature'];
-        $pression = $data['pression'];
-        $humidite = $data['humidite'];
+    if (isset($data['password'], $data['data']) && is_array($data['data'])){
+        if (!password_verify($data['password'], $hashed_password)) {
+            $response = ['status' => 'wrong password'];
+            header("HTTP/1.1 400 Bad Request");
+            echo json_encode($response);
+            exit();
+        }
 
+        // Sort the data so that the last element (most recent) is first
+        usort($data['data'], function ($a, $b) {
+            return $b['timestamp'] - $a['timestamp']; // Sort descending by timestamp
+        });
+
+        $first_timestamp = $data['data'][0]['timestamp'];
+
+        // timestep relative to the biggest one (biggest one put at 0)
+        foreach ($data['data'] as &$item) {
+            $item['timestamp'] -= $first_timestamp;
+        }
+        unset($item);
+ 
         $dbpath = 'private/info_meteo.db';
         // Create (or open) the SQLite database
         $db = new SQLite3($dbpath);
@@ -32,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->exec('CREATE TABLE IF NOT EXISTS meteo (id INTEGER PRIMARY KEY, timestamp INTEGER NOT NULL, temperature REAL, humidite REAL, pression REAL)');
 
         // Calculate the threshold timestamp for the last day
-        $threshold = time() - 86400; // 24 hours ago
+        $threshold = time() - $day_in_second; // 24 hours ago
 
         // Delete rows older than the last day
         $query = 'DELETE FROM meteo WHERE timestamp < :threshold';
@@ -41,18 +57,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
 
         $current_time = time();
-        // Ensure there's only one row by replacing the existing row
-        $stmt = $db->prepare('INSERT INTO meteo (timestamp, temperature, humidite, pression) VALUES (:current_time, :temperature, :humidite, :pression)');
-        $stmt->bindValue(':current_time', $current_time, SQLITE3_INTEGER);
-        $stmt->bindValue(':temperature', $temperature, SQLITE3_FLOAT);
-        $stmt->bindValue(':humidite', $humidite, SQLITE3_FLOAT);
-        $stmt->bindValue(':pression', $pression, SQLITE3_FLOAT);
+        foreach ($data['data'] as $item){
+            if (isset($item['temperature'], $item['pression'], $item['humidite'], $item['timestamp'])) {
+                // Extract values
+                $temperature = $item['temperature'];
+                $pression = $item['pression'];
+                $humidite = $item['humidite'];
+                $timestamp = $item['timestamp'];
 
-        // Execute the statement
-        $stmt->execute();
+                error_log("Inserting Data: Timestamp: " . ($current_time + $timestamp) . ", Temperature: $temperature, Humidite: $humidite, Pression: $pression");
 
+                // Insert the new data into the table
+                $stmt = $db->prepare('INSERT INTO meteo (timestamp, temperature, humidite, pression) VALUES (:timestamp, :temperature, :humidite, :pression)');
+                $stmt->bindValue(':timestamp', $current_time + $timestamp, SQLITE3_INTEGER);
+                $stmt->bindValue(':temperature', $temperature, SQLITE3_FLOAT);
+                $stmt->bindValue(':humidite', $humidite, SQLITE3_FLOAT);
+                $stmt->bindValue(':pression', $pression, SQLITE3_FLOAT);
+
+                // Execute the statement
+                $stmt->execute();
+            }
+        }
         // Close the database connection
         $db->close();
+
+        // Success response
         $response = ['status' => 'success'];
         echo json_encode($response);
         exit();
