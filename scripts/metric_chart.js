@@ -1,6 +1,6 @@
 let humidity_chart = document.getElementById("humidity_chart");
 let temperature_chart = document.getElementById("temperature_chart");
-let pressure_chart = document.getElementById("pressure_chart");
+let luminosity_chart = document.getElementById("luminosity_chart");
 
 function getMeteoData() {
     fetch('get_all_info_meteo.php') // Appel au fichier PHP
@@ -17,7 +17,7 @@ function getMeteoData() {
             }
             createChart(data, humidity_chart, data.humidite,'Humidité (%)'); // Création du graphique avec les données reçues
             createChart(data, temperature_chart, data.temperature,'Température (°C)');
-            createChart(data, pressure_chart, data.pression,'Pression (hPa)');
+            createChart(data, luminosity_chart, data.luminosity,'Luminosity (?)');
         })
         .catch(error => console.error("Erreur : ", error));
 }

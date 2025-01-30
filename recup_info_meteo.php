@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db = new SQLite3($dbpath);
 
         // Create the table if it doesn't exist
-        $db->exec('CREATE TABLE IF NOT EXISTS meteo (id INTEGER PRIMARY KEY, timestamp INTEGER NOT NULL, temperature REAL, humidite REAL, pression REAL)');
+        $db->exec('CREATE TABLE IF NOT EXISTS meteo (id INTEGER PRIMARY KEY, timestamp INTEGER NOT NULL, temperature REAL, humidite REAL, luminosity REAL)');
 
         // Calculate the threshold timestamp for the last day
         $threshold = time() - $day_in_second; // 24 hours ago
@@ -58,21 +58,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $current_time = time();
         foreach ($data['data'] as $item){
-            if (isset($item['temperature'], $item['pression'], $item['humidite'], $item['timestamp'])) {
+            if (isset($item['temperature'], $item['luminosity'], $item['humidite'], $item['timestamp'])) {
                 // Extract values
                 $temperature = $item['temperature'];
-                $pression = $item['pression'];
+                $luminosity = $item['luminosity'];
                 $humidite = $item['humidite'];
                 $timestamp = $item['timestamp'];
 
-                error_log("Inserting Data: Timestamp: " . ($current_time + $timestamp) . ", Temperature: $temperature, Humidite: $humidite, Pression: $pression");
+                error_log("Inserting Data: Timestamp: " . ($current_time + $timestamp) . ", Temperature: $temperature, Humidite: $humidite, luminosity: $luminosity");
 
                 // Insert the new data into the table
-                $stmt = $db->prepare('INSERT INTO meteo (timestamp, temperature, humidite, pression) VALUES (:timestamp, :temperature, :humidite, :pression)');
+                $stmt = $db->prepare('INSERT INTO meteo (timestamp, temperature, humidite, luminosity) VALUES (:timestamp, :temperature, :humidite, :luminosity)');
                 $stmt->bindValue(':timestamp', $current_time + $timestamp, SQLITE3_INTEGER);
                 $stmt->bindValue(':temperature', $temperature, SQLITE3_FLOAT);
                 $stmt->bindValue(':humidite', $humidite, SQLITE3_FLOAT);
-                $stmt->bindValue(':pression', $pression, SQLITE3_FLOAT);
+                $stmt->bindValue(':luminosity', $luminosity, SQLITE3_FLOAT);
 
                 // Execute the statement
                 $stmt->execute();

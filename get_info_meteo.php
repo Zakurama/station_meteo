@@ -7,7 +7,7 @@ $dbpath = 'private/info_meteo.db';
 $db = new SQLite3($dbpath);
 
 // Query to get the latest meteorological data
-$query = 'SELECT temperature, humidite, pression FROM meteo ORDER BY timestamp DESC LIMIT 1';
+$query = 'SELECT temperature, humidite, luminosity FROM meteo ORDER BY timestamp DESC LIMIT 1';
 $result = $db->query($query);
 
 // Check if data is found
@@ -16,7 +16,7 @@ if ($row = $result->fetchArray(SQLITE3_ASSOC)) {
     echo json_encode([
         'temperature' => $row['temperature'],
         'humidite' => $row['humidite'],
-        'pression' => $row['pression']
+        'luminosity' => $row['luminosity']
     ]);
 } else {
     // Return error if no data is found

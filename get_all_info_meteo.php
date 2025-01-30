@@ -13,14 +13,14 @@ $result = $db->query($query);
 $timestamps = [];
 $temperatures = [];
 $humidites = [];
-$pressions = [];
+$luminosity = [];
 
 
 while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
     $timestamps[] = $row['timestamp'];     // Add to timestamps array
     $temperatures[] = $row['temperature']; // Add to temperatures array
     $humidites[] = $row['humidite'];       // Add to humidites array
-    $pressions[] = $row['pression'];       // Add to pressions array
+    $luminosity[] = $row['luminosity'];       // Add to luminosities array
 }
 
 
@@ -29,7 +29,7 @@ if (!empty($timestamps)) {
         'timestamp' => $timestamps,
         'temperature' => $temperatures,
         'humidite' => $humidites,
-        'pression' => $pressions
+        'luminosity' => $luminosity
     ]);
 } else {
     // Return error if no data is found

@@ -1,7 +1,7 @@
-let pressureElement = document.getElementById("pressure")
+let luminosityElement = document.getElementById("luminosity")
 let temperatureElement = document.getElementById("temperature")
 let humidityElement = document.getElementById("humidity")
-let pressureDivElement = document.getElementById("pressure-div")
+let luminosityDivElement = document.getElementById("luminosity-div")
 let temperatureDivElement = document.getElementById("temperature-div")
 
 // Function to fetch the meteorological data
@@ -14,9 +14,9 @@ function getMeteoData() {
                 console.log('Error:', data.message);
             } else {
                 temperatureElement.innerHTML = data.temperature + "°C";
-                pressureElement.innerHTML = data.pression + "hPa";
+                luminosityElement.innerHTML = data.luminosity + "hPa";
                 humidityElement.innerHTML = data.humidite + "%";
-                verify_extreme_conditions(data.temperature, data.pression);
+                verify_extreme_conditions(data.temperature);
             }
         })
         .catch(error => {
@@ -28,7 +28,7 @@ function getMeteoData() {
 setInterval(getMeteoData, 2000);
 getMeteoData(); // Call the function once to load the data immediately
 
-function verify_extreme_conditions(temperature, pression) {
+function verify_extreme_conditions(temperature) {
     if (temperature > 30) {
         temperatureDivElement.style.backgroundColor = "rgba(213, 12, 12, 1)";
     }
@@ -37,11 +37,5 @@ function verify_extreme_conditions(temperature, pression) {
     }
     else {
         temperatureDivElement.style.backgroundColor = "";
-    }
-    if (pression > 1025 || pression < 1000) {
-        pressureDivElement.style.backgroundColor = "rgba(213, 12, 12, 1)";
-    }
-    else {
-        pressureDivElement.style.backgroundColor = "";
     }
 }
