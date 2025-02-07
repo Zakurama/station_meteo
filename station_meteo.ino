@@ -13,12 +13,16 @@
 
 #define FREQ_MESURE 10 // s
 #define WIFI_DELAY 500 // ms
+#define SERVEUR_REP_DELAY 5 //s
 #define WIFI_ATTENTE_CONNEXION 5
+#define DECIMALES_MESURES 2
+#define MAX_LEN_FORMAT 20
 #define MAX_LEN_ONE_DATA 64
 #define MAX_LEN_BUFFER_DATA 512
 
-#define uS_TO_S_FACTOR 1000000
-#define ms_TO_S_FACTOR 1000
+#define S_TO_uS_FACTOR 1000000
+#define S_TO_mS_FACTOR 1000
+#define ms_TO_S_FACTOR 0.001
 
 // Connexion Wifi
 const char* ssid_wifi = WIFI_SSID;
@@ -46,11 +50,13 @@ void enregistrerDonnees() {
   float luminosite = bh1750.light(); // En lux 
   float humidite = sensor.readHumidity(); // En %
   float temperature = sensor.readTemperature(); // En C°
-  timestamp = timestamp +  millis() + FREQ_MESURE*ms_TO_S_FACTOR;
+  timestamp = timestamp +  millis()*ms_TO_S_FACTOR + FREQ_MESURE;
   
   // Formater la nouvelle donnée à ajouter
   char new_data[MAX_LEN_ONE_DATA];
-  snprintf(new_data, sizeof(new_data), "%.2f-%.2f-%.2f-%d|", temperature, luminosite, humidite,timestamp);
+  char format[MAX_LEN_FORMAT];
+  snprintf(format, sizeof(format), "%%.%df-%%.%df-%%.%df-%%d|", DECIMALES_MESURES, DECIMALES_MESURES, DECIMALES_MESURES);
+  snprintf(new_data, sizeof(new_data), format, temperature, luminosite, humidite,timestamp);
 
   // Ajouter la nouvelle donnée à la chaîne stockée dans la mémoire RTC
   strncat(buffer_data, new_data, sizeof(buffer_data) - strlen(buffer_data) - 1);  // On évite le dépassement de mémoire
@@ -121,11 +127,11 @@ void envoyer_donnee() {
     
                 // Ajoute les valeurs dans le format JSON à la chaîne de sortie
                 jsonPayload += "{\"temperature\":";
-                jsonPayload += String(temperature, 2);  // Ajoute la température avec 2 décimales
+                jsonPayload += String(temperature,DECIMALES_MESURES);
                 jsonPayload += ",\"luminosity\":";
-                jsonPayload += String(luminosity, 2);   // Ajoute la luminosité avec 2 décimales
+                jsonPayload += String(luminosity,DECIMALES_MESURES);
                 jsonPayload += ",\"humidite\":";
-                jsonPayload += String(humidite, 2);     // Ajoute l'humidité avec 2 décimales
+                jsonPayload += String(humidite,DECIMALES_MESURES);
                 jsonPayload += ",\"timestamp\":";
                 jsonPayload += timestamp_;
                 jsonPayload += "}";
@@ -133,7 +139,7 @@ void envoyer_donnee() {
             token = strtok(NULL, delimiter);  // Récupère le suivant
         }
     
-        // Termine la chaîne JSON et ajoute le mot de passe
+        // Termine la chaîne JSON et ajoute le mot de passe 
         jsonPayload += "],\"password\":\"";
         jsonPayload += server_password;
         jsonPayload += "\"}";
@@ -146,10 +152,41 @@ void envoyer_donnee() {
         client.println(jsonPayload.length());
         client.println();
         client.println(jsonPayload);
-        Serial.println("Payload envoyée : " + jsonPayload);
         
-        // Reset buffer_data
-        memset(buffer_data, 0, sizeof(buffer_data));
+        // Attendre que le serveur réponde
+        unsigned long timeout = millis() + SERVEUR_REP_DELAY*S_TO_mS_FACTOR; 
+        while (client.available() == 0) {
+            if (millis() > timeout) {
+                // Le serveur n'a pas répondu
+                Serial.println("Erreur : Timeout de réponse du serveur");
+                Serial.println("La payload n'a pas été envoyée");
+                return;
+            }
+        }
+        
+        // Lire la réponse du serveur
+        String response = "";
+        while (client.available()) {
+            char c = client.read();
+            response += c;  // Accumule la réponse dans la variable 'response'
+        }
+        
+        // Permet d'extraire la partie qui nous intéresse de la JSON
+        int jsonStart = response.lastIndexOf("{");
+        if (jsonStart != -1) {
+            response = response.substring(jsonStart);  // Extraire uniquement la partie JSON
+        }
+        // Nettoyer la réponse (enlever espaces et sauts de ligne)
+        response.trim();
+        
+        if(response.equals("{\"status\":\"success\"}")){
+            Serial.println("Payload envoyée (et reçue par le serveur) : " + jsonPayload);
+            // Reset buffer_data
+            memset(buffer_data, 0, sizeof(buffer_data));
+        }
+        else{
+          Serial.println("Problème lors de l'envoie\reception de la data. Data conservée pour le prochain envoi.");
+        }        
     }
 }
 
@@ -174,7 +211,7 @@ void setup()
       envoyer_donnee();
     }
 
-    esp_sleep_enable_timer_wakeup(FREQ_MESURE * uS_TO_S_FACTOR);
+    esp_sleep_enable_timer_wakeup(FREQ_MESURE * S_TO_uS_FACTOR);
     esp_deep_sleep_start();
     
 }
